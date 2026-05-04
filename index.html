@@ -1,1 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- 
+    ========================================================================
+    PROJECT: Easy Links for Projects (Resource Directory)
+    VERSION: 1.1.1
+    AUTHOR: Kevin (Werewolf3788)
+    DESCRIPTION: A responsive, mobile-first card layout that fetches data 
+    from a Google Sheets CSV and categorizes entries by group.
+    
+    NEW IN 1.1.1:
+    - Transitioned to Measurement ID: G-Z9M5LXQ5XN (Stream: 13278632388).
+    - Integrated gtag Event Tracking for resource link clicks (Name, Group, URL).
+    - Maintained: 98% edge-to-edge width layout.
+    - Maintained: Robust CSV State-Machine Parser for complex rows.
+    - Maintained: Effingham & Gainesville Weather (Temp, Real Feel, Humidity).
+    - Global Standards: Header 30, Body 14, Section 50, Row 30.
+    ========================================================================
+    -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Auto-refresh page every 300 seconds (5 minutes) to update links and weather -->
+    <meta http-equiv="refresh" content="300">
+    <title>Easy Links for Projects</title>
 
+    <!-- Global Site Tag (gtag.js) - Google Analytics (Kevin's Tracking for Projects) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9M5LXQ5XN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-Z9M5LXQ5XN', {
+            'page_type': 'quick_links_dashboard',
+            'content_group': 'werewolf_personal_tracking',
+            'layout_version': '1.1.1',
+            'stream_id': '13278632388'
+        });
+
+        /**
+         * Global tracking function for link clicks
+         */
+        function trackLinkClick(name, group, url) {
+            gtag('event', 'select_content', {
+                'content_type': 'resource_link',
+                'item_id': url,
+                'item_name': name,
+                'item_category': group,
+                'method': 'click_open_link'
+            });
+            console.log(`Analytics: Tracked click for [${group}] ${name}`);
+        }
+    </script>
+
+    <style>
+        /* ========================================================================
+        CSS STYLES - UNIVERSAL STANDARDS
+        ========================================================================
+        */
+        :root {
+            --primary-bg: #ffffff;
+            --secondary-bg: #f8f9fa;
+            --text-color: #333333;
+            --header-size: 30px;
+            --body-size: 14px;
+            --section-height: 50px;
+            --row-height: 30px;
+            /* Default accent, will be overridden dynamically */
+            --current-accent: #222222;
+        }
+
+        * {
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: var(--body-size);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+        }
+
+        /* NAVIGATION & HEADER - 3 COLUMN LAYOUT */
+        header {
+            background-color: #222;
+            color: #fff;
+            padding: 10px 1%;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            min-height: 80px;
+        }
+
+        /* WEATHER BLOCKS */
+        .weather-block {
+            font-size: 0.75rem;
+            line-height: 1.3;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .weather-block.left { text-align: left; }
+        .weather-block.right { text-align: right; }
+
+        .weather-city {
+            font-weight: bold;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .weather-info {
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .weather-time {
+            color: #00d4ff;
+            font-weight: 500;
+        }
+
+        /* CENTER BRANDING */
+        .header-branding {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-weight: bold;
+            font-size: 1.25rem;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        /* MOBILE MENU TOGGLE */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 2px 0;
+        }
+
+        /* LAYOUT & CONTAINERS - EXPANDED WIDTH (98%) */
+        .container {
+            width: 98%;
+            max-width: 98%;
+            margin: 0 auto;
+            padding: 20px 0;
+        }
+
+        .group-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            transition: background-color 0.3s ease;
+        }
+
+        h2.group-title {
+            font-size: var(--header-size);
+            min-height: var(--section-height);
+            border-bottom: 3px solid var(--current-accent);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            color: #111;
+            padding-bottom: 5px;
+        }
+
+        .card-grid {
+            display: grid;
+            /* Adaptive grid for side-by-side layout */
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        /* CARD STYLING */
+        .card {
+            background: var(--primary-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-top: 4px solid var(--current-accent);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+
+        .card-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            min-height: var(--row-height);
+            color: #111;
+        }
+
+        .card-description {
+            flex-grow: 1;
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 0.95rem;
+            white-space: normal;
+        }
+
+        /* READ MORE LINK */
+        .read-more-btn {
+            display: inline-block;
+            margin-top: 5px;
+            color: var(--current-accent);
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .card-link {
+            text-decoration: none;
+            color: var(--current-accent);
+            font-weight: bold;
+            border: 2px solid var(--current-accent);
+            padding: 10px 12px;
+            border-radius: 6px;
+            text-align: center;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: transparent;
+            margin-top: 10px;
+        }
+
+        .card-link:hover {
+            background: var(--current-accent);
+            color: #fff;
+        }
+
+        /* LIGHTBOX OVERLAY */
+        #lightbox-overlay {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #lightbox-content {
+            background: white;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            padding: 35px;
+            border-radius: 12px;
+            position: relative;
+            overflow-y: auto;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        #lightbox-text-area {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        #lightbox-text-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 12px;
+            color: #000;
+        }
+
+        .close-lightbox {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2rem;
+            color: #ccc;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-lightbox:hover { color: #999; }
+
+        /* MOBILE RESPONSIVE STYLES */
+        @media (max-width: 768px) {
+            header {
+                grid-template-columns: 1fr auto;
+                min-height: auto;
+                padding: 10px;
+            }
+            .weather-block.left { display: none; }
+            .weather-block.right {
+                grid-column: span 2;
+                text-align: center;
+                margin-top: 5px;
+                font-size: 0.65rem;
+                border-top: 1px solid #444;
+                padding-top: 5px;
+            }
+            .header-branding { padding: 0; text-align: left; }
+            .logo { font-size: 1.1rem; }
+            .subtitle { font-size: 0.75rem; }
+            .menu-toggle { display: flex; }
+            .group-section { padding: 15px; }
+            .card-grid { grid-template-columns: 1fr; }
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <!-- Left Side: Effingham, IL Weather & Time (Central Time) -->
+        <div class="weather-block left" id="weather-effingham">
+            <div class="weather-city">Effingham, IL</div>
+            <div class="weather-info">Loading...</div>
+            <div class="weather-time">--:-- --</div>
+        </div>
+
+        <!-- Center: Branding -->
+        <div class="header-branding">
+            <div class="logo">Easy Links for Projects</div>
+            <div class="subtitle">Scott & Kevin Quick tabs</div>
+        </div>
+
+        <!-- Right Side: Gainesville, FL Weather & Time (Eastern Time) -->
+        <div class="weather-block right" id="weather-gainesville">
+            <div class="weather-city">Gainesville, FL</div>
+            <div class="weather-info">Loading...</div>
+            <div class="weather-time">--:-- --</div>
+        </div>
+
+        <!-- Mobile Sandwich icon -->
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
+    </header>
+
+    <div class="container" id="content-area">
+        <p>Fetching the latest links from Google Sheets...</p>
+    </div>
+
+    <!-- Universal Lightbox Container -->
+    <div id="lightbox-overlay" onclick="closeLightbox()">
+        <div id="lightbox-content" onclick="event.stopPropagation()">
+            <span class="close-lightbox" onclick="closeLightbox()">&times;</span>
+            <div id="lightbox-text-area">
+                <div id="lightbox-text-title"></div>
+                <div id="lightbox-text-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================================================
+        JAVASCRIPT - DATA FETCHING & UI LOGIC
+        ========================================================================
+        */
+
+        const VERSION = "1.1.1";
+        const CACHE_BUSTER = `&cb=${new Date().getTime()}`;
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIWJZWFhdHs8HKJuhcEAb7KI6uCK2j5uyXq1jPP4aE1rkmm3ookclWtr6LRnoZcoPdJWtLa1BiZT1J/pub?output=csv' + CACHE_BUSTER;
+
+        // Accessible Alternating Color Palette
+        const COLOR_PALETTE = [
+            ['#ebf5ff', '#0056b3'], ['#f0fff4', '#276749'], ['#fff5f5', '#c53030'],
+            ['#faf5ff', '#6b46c1'], ['#fffaf0', '#9c4221'], ['#e6fffa', '#2c7a7b']
+        ];
+
+        function getWeatherDesc(code) {
+            const mapping = {
+                0: "Clear Sky", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
+                45: "Fog", 48: "Depositing Rime Fog", 51: "Light Drizzle", 61: "Slight Rain",
+                71: "Slight Snow", 95: "Thunderstorm"
+            };
+            return mapping[code] || "Conditions Vary";
+        }
+
+        async function updateWeatherAndTime() {
+            const locations = [
+                { id: 'effingham', lat: 39.12, lon: -88.54, tz: 'America/Chicago' },
+                { id: 'gainesville', lat: 29.65, lon: -82.32, tz: 'America/New_York' }
+            ];
+
+            locations.forEach(async (loc) => {
+                const el = document.getElementById(`weather-${loc.id}`);
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: loc.tz });
+                const zoneStr = now.toLocaleTimeString('en-US', { timeZoneName: 'short', timeZone: loc.tz }).split(' ').pop();
+                el.querySelector('.weather-time').textContent = `${timeStr} ${zoneStr}`;
+
+                try {
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&temperature_unit=fahrenheit`);
+                    const data = await res.json();
+                    const temp = Math.round(data.current.temperature_2m);
+                    const realFeel = Math.round(data.current.apparent_temperature);
+                    const humidity = data.current.relative_humidity_2m;
+                    const desc = getWeatherDesc(data.current.weather_code);
+                    el.querySelector('.weather-info').innerHTML = `${temp}°F (Feels ${realFeel}°F)<br>${humidity}% Humidity • ${desc}`;
+                } catch (e) { el.querySelector('.weather-info').textContent = "Weather N/A"; }
+            });
+        }
+
+        function toggleMenu() { console.log("Mobile menu interaction."); }
+
+        function parseCSV(text) {
+            const rows = [];
+            let row = [];
+            let field = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const next = text[i+1];
+                if (inQuotes) {
+                    if (char === '"' && next === '"') { field += '"'; i++; }
+                    else if (char === '"') { inQuotes = false; }
+                    else { field += char; }
+                } else {
+                    if (char === '"') { inQuotes = true; }
+                    else if (char === ',') { row.push(field); field = ''; }
+                    else if (char === '\n' || char === '\r') {
+                        row.push(field);
+                        if (row.some(f => f.trim() !== "")) rows.push(row);
+                        row = []; field = '';
+                        if (char === '\r' && next === '\n') i++;
+                    } else { field += char; }
+                }
+            }
+            if (field || row.length > 0) { row.push(field); rows.push(row); }
+            return rows;
+        }
+
+        async function loadCards() {
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Network response not ok');
+                const data = await response.text();
+                const rows = parseCSV(data);
+                rows.shift(); 
+                const groups = {};
+                rows.forEach(row => {
+                    const name = (row[0] || "").trim();
+                    if (!name) return;
+                    const desc = (row[1] || "").trim();
+                    const groupName = (row[2] || "").trim() || 'General';
+                    const url = (row[3] || "").trim() || '#';
+                    if (!groups[groupName]) groups[groupName] = [];
+                    groups[groupName].push({ name, description: desc, group: groupName, url });
+                });
+                renderCards(groups);
+            } catch (error) { document.getElementById('content-area').innerHTML = `<p>Error loading spreadsheet.</p>`; }
+        }
+
+        function renderCards(groups) {
+            const container = document.getElementById('content-area');
+            container.innerHTML = '';
+            const sortedGroups = Object.keys(groups).sort();
+            const MAX_DESC_LENGTH = 150;
+
+            sortedGroups.forEach((group, index) => {
+                const colorPair = COLOR_PALETTE[index % COLOR_PALETTE.length];
+                const section = document.createElement('section');
+                section.className = 'group-section';
+                section.style.backgroundColor = colorPair[0];
+                section.style.setProperty('--current-accent', colorPair[1]);
+
+                section.innerHTML = `<h2 class="group-title">${group}</h2>`;
+                const grid = document.createElement('div');
+                grid.className = 'card-grid';
+
+                groups[group].forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    let finalUrl = item.url;
+                    if (item.url.match(/^[0-9]+ .+, .+/)) {
+                        finalUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.url)}`;
+                    }
+
+                    const cleanDesc = item.description.replace(/\n/g, "<br>");
+                    let displayDesc = cleanDesc;
+                    let readMoreHtml = "";
+                    if (item.description.length > MAX_DESC_LENGTH) {
+                        displayDesc = item.description.substring(0, MAX_DESC_LENGTH) + "...";
+                        readMoreHtml = `<span class="read-more-btn" onclick="openTextLightbox('${item.name.replace(/'/g, "\\'")}', \`${cleanDesc.replace(/`/g, "\\`")}\`)">Read more</span>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="card-name">${item.name}</div>
+                        <div class="card-description">${displayDesc} ${readMoreHtml}</div>
+                        <a href="${finalUrl}" 
+                           target="_blank" 
+                           class="card-link" 
+                           onclick="trackLinkClick('${item.name.replace(/'/g, "\\'")}', '${group.replace(/'/g, "\\'")}', '${finalUrl.replace(/'/g, "\\'")}')">
+                           Open Link
+                        </a>
+                    `;
+                    grid.appendChild(card);
+                });
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+            setupImageLightbox();
+        }
+
+        window.openTextLightbox = function(title, content) {
+            const overlay = document.getElementById('lightbox-overlay');
+            const textTitle = document.getElementById('lightbox-text-title');
+            const textBody = document.getElementById('lightbox-text-body');
+            textTitle.innerHTML = title;
+            textBody.innerHTML = content;
+            overlay.style.display = 'flex';
+        };
+
+        function setupImageLightbox() {
+            document.querySelectorAll('.container img').forEach(img => {
+                if (img.classList.contains('lightbox-target')) return;
+                img.classList.add('lightbox-target');
+                img.onclick = () => {
+                    const overlay = document.getElementById('lightbox-overlay');
+                    const textTitle = document.getElementById('lightbox-text-title');
+                    const textBody = document.getElementById('lightbox-text-body');
+                    textTitle.innerHTML = "Image View";
+                    textBody.innerHTML = `<img src="${img.src}" style="max-width:100%; border-radius:8px;">`;
+                    overlay.style.display = 'flex';
+                };
+            });
+        }
+
+        function closeLightbox() { document.getElementById('lightbox-overlay').style.display = 'none'; }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCards();
+            updateWeatherAndTime();
+            setInterval(updateWeatherAndTime, 60000);
+        });
+    </script>
+</body>
+</html>
