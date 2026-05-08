@@ -4,12 +4,17 @@
     <!-- 
     ========================================================================
     PROJECT: Easy Links for Projects (Resource Directory)
-    VERSION: 1.1.7
+    VERSION: 1.1.8
     AUTHOR: Kevin (Werewolf3788)
     HOSTING: Optimized for GitHub Pages (werewolf3788.github.io/Quick-Links/)
     DESCRIPTION: A responsive, mobile-first card layout that fetches data 
     from a Google Sheets CSV and categorizes entries by group.
     
+    NEW IN 1.1.8:
+    - Smart Tab Management: Assigns a unique window target to every link so
+      duplicate clicks focus the existing open tab rather than spawning new ones.
+    - Master Dev Protocol: Added KF Watermark overlay to the bottom-left.
+
     NEW IN 1.1.7:
     - Smart Group Stacking: Groups now calculate width based on card counts.
     - Multi-Group Rows: Allows groups of 1, 2, 3, or 4 to sit side-by-side.
@@ -23,6 +28,9 @@
     - Analytics: Measurement ID: G-Z9M5LXQ5XN (Stream: 13278632388).
     - Weather: Effingham & Gainesville live (Temp, Real Feel, Humidity).
     - Global Standards: Header 30px, Body 14px, Section 50px, Row 30px.
+    
+    TIMESTAMP: May 7, 2026 - 8:39 PM EDT (New York Time)
+    NO STRIPPING, NO COMPRESSING, DON'T CHANGE WHAT I DIDN'T SAY TO CHANGE.
     ========================================================================
     -->
     <meta charset="UTF-8">
@@ -41,7 +49,7 @@
         gtag('config', 'G-Z9M5LXQ5XN', {
             'page_type': 'quick_links_dashboard',
             'content_group': 'werewolf_personal_tracking',
-            'layout_version': '1.1.7',
+            'layout_version': '1.1.8',
             'stream_id': '13278632388'
         });
 
@@ -338,6 +346,23 @@
             line-height: 1;
         }
 
+        /* KF SIGNATURE WATERMARK (MASTER DEV PROTOCOL) */
+        .kf-signature {
+            position: fixed;
+            bottom: 20px; 
+            left: 20px;
+            display: flex;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 900;
+            font-size: 24px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+        .kf-k { color: #FF4500; transform: scaleX(-1); z-index: 2; }
+        .kf-f { color: #000000; margin-left: -0.22em; z-index: 1; }
+
         /* MOBILE RESPONSIVE STYLES (14/30 standards) */
         @media (max-width: 768px) {
             header {
@@ -364,6 +389,7 @@
                 min-width: 100% !important;
             }
             .card-grid { grid-template-columns: 1fr; }
+            .kf-signature { bottom: 10px; font-size: 16px; left: 10px; }
         }
 
         img {
@@ -416,13 +442,19 @@
         </div>
     </div>
 
+    <!-- KF Signature Watermark -->
+    <div class="kf-signature">
+        <span class="kf-k">K</span>
+        <span class="kf-f">F</span>
+    </div>
+
     <script>
         /* ========================================================================
         JAVASCRIPT - DATA FETCHING & UI LOGIC
         ========================================================================
         */
 
-        const VERSION = "1.1.7";
+        const VERSION = "1.1.8";
         
         /**
          * Returns a timestamp for the cache buster to force fresh data fetch
@@ -537,7 +569,7 @@
         }
 
         /**
-         * Grid Rendering with SMART FLEX LOGIC - Version 1.1.7
+         * Grid Rendering with SMART FLEX LOGIC - Version 1.1.8
          * Calculates flex-basis based on card counts to allow groups to sit side-by-side.
          */
         function renderCards(groups) {
@@ -596,11 +628,14 @@
                         readMoreHtml = `<span class="read-more-btn" onclick="openTextLightbox('${item.name.replace(/'/g, "\\'")}', \`${cleanDesc.replace(/`/g, "\\`")}\`)">Read more</span>`;
                     }
 
+                    // Generate a unique target name derived from the link's name to prevent duplicate tabs
+                    const uniqueTarget = `tab_${item.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
                     card.innerHTML = `
                         <div class="card-name">${item.name}</div>
                         <div class="card-description">${displayDesc} ${readMoreHtml}</div>
                         <a href="${finalUrl}" 
-                           target="_blank" 
+                           target="${uniqueTarget}" 
                            class="card-link" 
                            onclick="trackLinkClick('${item.name.replace(/'/g, "\\'")}', '${group.replace(/'/g, "\\'")}', '${finalUrl.replace(/'/g, "\\'")}')">
                            Open Link
