@@ -4,12 +4,16 @@
     <!-- 
     ========================================================================
     PROJECT: Easy Links for Projects (Resource Directory)
-    VERSION: 1.1.8
+    VERSION: 1.1.9
     AUTHOR: Kevin (Werewolf3788)
     HOSTING: Optimized for GitHub Pages (werewolf3788.github.io/Quick-Links/)
     DESCRIPTION: A responsive, mobile-first card layout that fetches data 
     from a Google Sheets CSV and categorizes entries by group.
     
+    NEW IN 1.1.9:
+    - Glossy Premium UI: Added glass-like inner shadows, subtle background gradients, 
+      and a diagonal light-sweep animation on hover for a high-end glossy finish.
+
     NEW IN 1.1.8:
     - Smart Tab Management: Assigns a unique window target to every link so
       duplicate clicks focus the existing open tab rather than spawning new ones.
@@ -29,7 +33,7 @@
     - Weather: Effingham & Gainesville live (Temp, Real Feel, Humidity).
     - Global Standards: Header 30px, Body 14px, Section 50px, Row 30px.
     
-    TIMESTAMP: May 7, 2026 - 8:39 PM EDT (New York Time)
+    TIMESTAMP: May 7, 2026 - 8:48 PM EDT (New York Time)
     NO STRIPPING, NO COMPRESSING, DON'T CHANGE WHAT I DIDN'T SAY TO CHANGE.
     ========================================================================
     -->
@@ -49,7 +53,7 @@
         gtag('config', 'G-Z9M5LXQ5XN', {
             'page_type': 'quick_links_dashboard',
             'content_group': 'werewolf_personal_tracking',
-            'layout_version': '1.1.8',
+            'layout_version': '1.1.9',
             'stream_id': '13278632388'
         });
 
@@ -202,7 +206,8 @@
             transition: background-color 0.3s ease;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            /* Glossy inner light shadow on the top edge of the group container */
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), 0 4px 12px rgba(0,0,0,0.05);
             margin-bottom: 20px;
             
             /* Smart Flex Defaults */
@@ -230,22 +235,51 @@
             height: 100%;
         }
 
-        /* CARD STYLING */
+        /* CARD STYLING - GLOSSY FINISH (V1.1.9) */
         .card {
-            background: var(--primary-bg);
+            background: linear-gradient(145deg, var(--primary-bg) 0%, #f4f7f9 100%); /* Subtle glossy gradient base */
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            /* Inner top white highlight for glass edge + soft drop shadow */
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(0,0,0,0.08);
             padding: 20px;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
             border-top: 4px solid var(--current-accent);
             min-height: 247px; /* Matches user provided height */
+            position: relative;
+            overflow: hidden; /* Contains the hover shine */
+        }
+
+        /* The Glossy Light Sweep Animation */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            transition: left 0.7s ease-in-out;
+            pointer-events: none;
+            z-index: 1; /* Below text */
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            /* Enhance the glow/shadow when picked up */
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.9), 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .card:hover::before {
+            left: 200%; /* Sweeps the light reflection across the card */
+        }
+
+        /* Elevate content above the glossy background layer */
+        .card-name, .card-description, .card-link {
+            position: relative;
+            z-index: 2;
         }
 
         .card-name {
@@ -275,6 +309,7 @@
             text-decoration: underline;
         }
 
+        /* GLOSSY BUTTONS */
         .card-link {
             text-decoration: none;
             color: var(--current-accent);
@@ -283,16 +318,19 @@
             padding: 10px 12px;
             border-radius: 6px;
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            background: transparent;
+            /* Subtle top-down gloss on button interior */
+            background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%);
             margin-top: auto; /* Pushes button to bottom of standard height card */
         }
 
         .card-link:hover {
             background: var(--current-accent);
             color: #fff;
+            /* Add shadow to button on hover */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         /* UNIVERSAL LIGHTBOX OVERLAY */
@@ -454,7 +492,7 @@
         ========================================================================
         */
 
-        const VERSION = "1.1.8";
+        const VERSION = "1.1.9";
         
         /**
          * Returns a timestamp for the cache buster to force fresh data fetch
@@ -569,7 +607,7 @@
         }
 
         /**
-         * Grid Rendering with SMART FLEX LOGIC - Version 1.1.8
+         * Grid Rendering with SMART FLEX LOGIC - Version 1.1.9
          * Calculates flex-basis based on card counts to allow groups to sit side-by-side.
          */
         function renderCards(groups) {
