@@ -4,13 +4,20 @@
     <!-- 
     ========================================================================
     PROJECT: Easy Links for Projects (Resource Directory)
-    VERSION: 1.2.4
+    VERSION: 1.2.5
     AUTHOR: Kevin (Werewolf3788)
     HOSTING: Optimized for GitHub Pages (werewolf3788.github.io/Quick-Links/)
     DESCRIPTION: A responsive, mobile-first card layout that fetches data 
       from a Google Sheets CSV and categorizes entries by group. Features
-      time-of-day reactive glossy themes and Column E background injection.
+      time-of-day themes, card background images, and advanced details lightboxes.
     
+    NEW IN 1.2.5:
+    - Card-Wide Lightbox Activation: Clicking anywhere on a card body triggers an 
+      immersive lightbox modal showcasing the Full Title, Full Background Image Asset, 
+      the complete uncropped description, and an integrated smart action link.
+    - Preserved Logic: Keeps modern time-of-day background gradients, smart inter-tab 
+      window focusing, explicit UTM parameter additions, and GA tracking natively intact.
+
     NEW IN 1.2.4:
     - Time-of-Day Dynamic Themes: Eliminated flat white card backgrounds. The board now 
       evaluates local time to alternate between Dawn, Day, Dusk, and Night dark glossy gradients.
@@ -23,17 +30,8 @@
     - Standardized UTM Injection: Automatically checks and appends tracking metrics 
       (?utm_source=quicklinks_dashboard&utm_medium=card_click) directly onto link endpoints.
     - Analytics Verification: Checked Measurement ID: G-Z9M5LXQ5XN (Stream: 13278632388).
-
-    NEW IN 1.2.2:
-    - Smart Window Focus Tracking: Links spawn a new tab mapped to target="tab_Link_Name".
-      If that tab instance is already active, clicking the button instantly switches
-      focus and updates the tab instead of spawning unnecessary duplicates.
-
-    NEW IN 1.2.1:
-    - Location Transition: Changed left weather station from Effingham, IL to 
-      Flora, IL (Coordinates: 38.67, -88.49) to match user operational region.
     
-    TIMESTAMP: June 27, 2026 - 6:55 PM EDT (New York Time)
+    TIMESTAMP: June 27, 2026 - 7:15 PM EDT (New York Time)
     NO STRIPPING, NO COMPRESSING, DON'T CHANGE WHAT I DIDN'T SAY TO CHANGE.
     ========================================================================
     -->
@@ -53,7 +51,7 @@
         gtag('config', 'G-Z9M5LXQ5XN', {
             'page_type': 'quick_links_dashboard',
             'content_group': 'werewolf_personal_tracking',
-            'layout_version': '1.2.4',
+            'layout_version': '1.2.5',
             'stream_id': '13278632388'
         });
 
@@ -243,7 +241,7 @@
             height: 100%;
         }
 
-        /* CARD STYLING - GLOSSY FINISH (V1.2.4 Time Adaptive Gloss) */
+        /* CARD STYLING - GLOSSY FINISH (V1.2.5 Modals Adjustment) */
         .card {
             background: var(--theme-card-gradient);
             background-position: center;
@@ -260,6 +258,7 @@
             min-height: 247px; /* Matches user provided height */
             position: relative;
             overflow: hidden; /* Contains the hover shine */
+            cursor: pointer; /* Indicated whole card box is interactive */
         }
 
         /* Ambient translucent layer targeting dark visibility readability when images load */
@@ -325,6 +324,10 @@
             color: #d1d5db;
             font-size: 0.95rem;
             white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limit preview space gracefully */
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
         }
 
         .card.has-bg-img .card-description {
@@ -335,17 +338,6 @@
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255,255,255,0.05);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        /* READ MORE LINK */
-        .read-more-btn {
-            display: inline-block;
-            margin-top: 5px;
-            color: var(--current-accent);
-            font-size: 0.85rem;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: underline;
         }
 
         /* GLOSSY BUTTONS */
@@ -363,7 +355,6 @@
             /* Subtle top-down gloss on button interior */
             background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
             margin-top: auto; /* Pushes button to bottom of standard height card */
-            cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             backdrop-filter: blur(2px);
         }
@@ -411,20 +402,67 @@
             overflow-y: auto;
             box-shadow: 0 25px 50px rgba(0,0,0,0.8);
             border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         #lightbox-text-area {
             color: #e5e7eb;
             line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         #lightbox-text-title {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             font-weight: bold;
-            margin-bottom: 20px;
+            color: #ffffff;
             border-bottom: 2px solid rgba(255,255,255,0.1);
             padding-bottom: 12px;
-            color: #ffffff;
+            margin: 0;
+        }
+
+        .lightbox-media-preview {
+            width: 100%;
+            max-height: 320px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #lightbox-text-body {
+            font-size: 1.05rem;
+            color: #d1d5db;
+            white-space: normal;
+        }
+
+        /* LIGHTBOX ACTION BUTTON */
+        .lightbox-action-btn {
+            text-decoration: none;
+            color: #0b0f19;
+            background: #00d4ff;
+            font-weight: bold;
+            padding: 14px 20px;
+            border-radius: 6px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            margin-top: 10px;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .lightbox-action-btn:hover {
+            background: #ffffff;
+            color: #0b0f19;
+            box-shadow: 0 0 20px #ffffff;
         }
 
         .close-lightbox {
@@ -435,6 +473,10 @@
             color: #9ca3af;
             cursor: pointer;
             line-height: 1;
+            z-index: 10;
+        }
+        .close-lightbox:hover {
+            color: #ffffff;
         }
 
         /* KF SIGNATURE WATERMARK (MASTER DEV PROTOCOL) */
@@ -527,8 +569,10 @@
         <div id="lightbox-content" onclick="event.stopPropagation()">
             <span class="close-lightbox" onclick="closeLightbox()">×</span>
             <div id="lightbox-text-area">
-                <div id="lightbox-text-title"></div>
+                <h2 id="lightbox-text-title"></h2>
+                <div id="lightbox-media-anchor"></div>
                 <div id="lightbox-text-body"></div>
+                <div id="lightbox-action-anchor"></div>
             </div>
         </div>
     </div>
@@ -544,7 +588,7 @@
         JAVASCRIPT - DATA FETCHING & UI LOGIC
         ======================================================================= */
 
-        const VERSION = "1.2.4";
+        const VERSION = "1.2.5";
         
         // Persistent global register mapping window pointer references
         const activeTabsMap = {};
@@ -559,19 +603,15 @@
             let cardGradient = "linear-gradient(145deg, #1f2937 0%, #111827 100%)";
             
             if (currentHour >= 5 && currentHour < 8) {
-                // Dawn Theme: Deep Morning Indigo/Violet
                 pageBg = "#0f0e17";
                 cardGradient = "linear-gradient(145deg, #2e1b4b 0%, #1e1b4b 100%)";
             } else if (currentHour >= 8 && currentHour < 17) {
-                // Day Theme: Slick Charcoal Tech Glass
                 pageBg = "#0b0f19";
                 cardGradient = "linear-gradient(145deg, #1f2937 0%, #111827 100%)";
             } else if (currentHour >= 17 && currentHour < 20) {
-                // Dusk Theme: Twilight Violet Red
                 pageBg = "#130f26";
                 cardGradient = "linear-gradient(145deg, #3b1154 0%, #210b36 100%)";
             } else {
-                // Night Theme: Midnight Obsidian
                 pageBg = "#030712";
                 cardGradient = "linear-gradient(145deg, #111827 0%, #030712 100%)";
             }
@@ -581,9 +621,6 @@
             document.documentElement.style.setProperty('--theme-card-gradient', cardGradient);
         }
 
-        /**
-         * Returns a timestamp for the cache buster to force fresh data fetch
-         */
         function getCacheBuster() {
             return `&cb=${new Date().getTime()}`;
         }
@@ -592,7 +629,6 @@
             return 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMb5Z2qGYtJLqx5dwnDKUdlLcCEcgGHKe_elqxIy-NvsWbDKtYgJAFeSXKGmSIxdBPfzFtFZt4HzV-/pub?output=csv' + getCacheBuster();
         }
 
-        // Accessible Alternating Semitranslucent Container Accents
         const COLOR_PALETTE = [
             ['rgba(30, 41, 59, 0.45)', '#38bdf8'], ['rgba(15, 43, 36, 0.45)', '#4ade80'], ['rgba(69, 26, 26, 0.45)', '#f87171'],
             ['rgba(4e, 29, 74, 0.45)', '#c084fc'], ['rgba(67, 30, 12, 0.45)', '#fb923c'], ['rgba(13, 47, 49, 0.45)', '#2dd4bf']
@@ -607,9 +643,6 @@
             return mapping[code] || "Conditions Vary";
         }
 
-        /**
-         * Real-time weather and time updates for Flora and Gainesville
-         */
         async function updateWeatherAndTime() {
             const locations = [
                 { id: 'flora', lat: 38.67, lon: -88.49, tz: 'America/Chicago' },
@@ -638,10 +671,6 @@
 
         function toggleMenu() { console.log("Mobile menu interaction."); }
 
-        /**
-         * State-Machine CSV Parser
-         * Essential for multi-line descriptions inside a single card
-         */
         function parseCSV(text) {
             const rows = [];
             let row = [];
@@ -671,7 +700,7 @@
 
         async function loadCards() {
             try {
-                applyTimeBasedTheme(); // Recalculate dynamic backgrounds on interface draw
+                applyTimeBasedTheme();
                 const response = await fetch(getCSVUrl());
                 if (!response.ok) throw new Error('Network response not ok');
                 const data = await response.text();
@@ -684,7 +713,7 @@
                     const desc = (row[1] || "").trim();
                     const groupName = (row[2] || "").trim() || 'General';
                     const url = (row[3] || "").trim() || '#';
-                    const imgUrl = (row[4] || "").trim(); // Column E: Image URL
+                    const imgUrl = (row[4] || "").trim(); 
                     if (!groups[groupName]) groups[groupName] = [];
                     groups[groupName].push({ name, description: desc, group: groupName, url, imageUrl: imgUrl });
                 });
@@ -697,45 +726,69 @@
 
         /**
          * Advanced Inter-Tab Navigation Routing Handler
-         * Reuses and targets existing tabs directly via explicit window pointers if available,
-         * shifting focus instantly rather than building duplicate tab clutter.
          */
         window.executeSmartTabFocus = function(event, uniqueTargetId, destinationUrl, linkName, structuralGroup) {
-            event.preventDefault(); // Stop default basic handling
+            if (event) event.preventDefault(); 
             
-            // Execute the Google Analytics tracking protocol
             trackLinkClick(linkName, structuralGroup, destinationUrl);
 
-            // If the window pointer instance exists and hasn't been completely closed by the user
             if (activeTabsMap[uniqueTargetId] && !activeTabsMap[uniqueTargetId].closed) {
                 activeTabsMap[uniqueTargetId].location.href = destinationUrl;
-                activeTabsMap[uniqueTargetId].focus(); // Force browser focus shift to the existing tab
+                activeTabsMap[uniqueTargetId].focus(); 
             } else {
-                // Otherwise, open a pristine tab window container and save its runtime pointer reference
                 activeTabsMap[uniqueTargetId] = window.open(destinationUrl, uniqueTargetId);
             }
         };
 
         /**
-         * Grid Rendering with SMART FLEX LOGIC & Glass Background Injections - Version 1.2.4
-         * Calculates flex-basis based on card counts to allow groups to sit side-by-side.
+         * Comprehensive Multi-Asset Card Lightbox Opener
+         * Assembles the complete layout overview including full background images and buttons seamlessly
+         */
+        window.openAdvancedCardLightbox = function(title, description, imageUrl, uniqueTargetId, destinationUrl, groupName) {
+            const overlay = document.getElementById('lightbox-overlay');
+            const titleEl = document.getElementById('lightbox-text-title');
+            const mediaAnchor = document.getElementById('lightbox-media-anchor');
+            const bodyEl = document.getElementById('lightbox-text-body');
+            const actionAnchor = document.getElementById('lightbox-action-anchor');
+
+            titleEl.textContent = title;
+            bodyEl.innerHTML = description;
+
+            // Handle image rendering inside lightbox frame
+            if (imageUrl && imageUrl.startsWith('http')) {
+                mediaAnchor.innerHTML = `<img src="${imageUrl}" class="lightbox-media-preview" alt="${title}">`;
+            } else {
+                mediaAnchor.innerHTML = '';
+            }
+
+            // Generate clean execution call variables for the action link inside lightbox layout
+            const escUrl = destinationUrl.replace(/'/g, "\\'");
+            const escName = title.replace(/'/g, "\\'");
+            const escGroup = groupName.replace(/'/g, "\\'");
+
+            actionAnchor.innerHTML = `
+                <a class="lightbox-action-btn" onclick="executeSmartTabFocus(event, '${uniqueTargetId}', '${escUrl}', '${escName}', '${escGroup}')">
+                    Open Resource Link
+                </a>
+            `;
+
+            overlay.style.display = 'flex';
+        };
+
+        /**
+         * Grid Rendering with SMART FLEX LOGIC & Full Card Lightbox Injections
          */
         function renderCards(groups) {
             const container = document.getElementById('content-area');
             container.innerHTML = '';
             const sortedGroups = Object.keys(groups).sort();
-            const MAX_DESC_LENGTH = 150;
             
-            // Base slot width (card + gap)
             const SLOT_WIDTH = 347; 
 
             sortedGroups.forEach((group, index) => {
                 const colorPair = COLOR_PALETTE[index % COLOR_PALETTE.length];
                 const section = document.createElement('section');
-                
                 const itemCount = groups[group].length;
-                
-                // CALCULATE DYNAMIC FLEX BASIS
                 const dynamicBasis = itemCount * SLOT_WIDTH;
                 
                 section.className = `group-section`;
@@ -762,42 +815,38 @@
                         finalUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.url)}`;
                     }
 
-                    // Strict UTM Injection: Append tags seamlessly if not explicitly set in the raw URL endpoints
                     if (finalUrl !== '#' && !finalUrl.includes('utm_source=')) {
                         const separator = finalUrl.includes('?') ? '&' : '?';
                         finalUrl = `${finalUrl}${separator}utm_source=quicklinks_dashboard&utm_medium=card_click&utm_campaign=internal_utility`;
                     }
 
                     const cleanDesc = item.description.replace(/\n/g, "<br>");
-                    let displayDesc = cleanDesc;
-                    let readMoreHtml = "";
-                    if (item.description.length > MAX_DESC_LENGTH) {
-                        displayDesc = item.description.substring(0, MAX_DESC_LENGTH) + "...";
-                        readMoreHtml = `<span class="read-more-btn" onclick="openTextLightbox('${item.name.replace(/'/g, "\\'")}', \`${cleanDesc.replace(/`/g, "\\`")}\`)">Read more</span>`;
-                    }
-
-                    // Generate custom alphanumeric tab target window identifiers matching named targets
                     const targetTabWindowId = `tab_${item.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
-                    // Column E Background Image Injection Handler
                     if (item.imageUrl && item.imageUrl.startsWith('http')) {
                         card.classList.add('has-bg-img');
-                        // Layers a precise dark linear gradient tint overlay to maximize text legibility on top of image streams
                         card.style.backgroundImage = `linear-gradient(135deg, rgba(15, 23, 42, 0.55) 0%, rgba(15, 23, 42, 0.85) 100%), url('${item.imageUrl}')`;
+                    } else {
+                        card.style.backgroundImage = `linear-gradient(145deg, var(--theme-card-gradient) 0%, rgba(0,0,0,0.2) 100%)`;
                     }
 
-                    // Safely prepare execution strings for handling inside onclick attributes
                     const cleanItemName = item.name.replace(/'/g, "\\'");
                     const cleanGroupName = group.replace(/'/g, "\\'");
                     const cleanFinalUrl = finalUrl.replace(/'/g, "\\'");
+                    const cleanImgUrl = item.imageUrl ? item.imageUrl.replace(/'/g, "\\'") : '';
+
+                    // Main card click event listener triggers the detailed structural lightbox view
+                    card.onclick = function() {
+                        openAdvancedCardLightbox(item.name, cleanDesc, cleanImgUrl, targetTabWindowId, finalUrl, group);
+                    };
 
                     card.innerHTML = `
                         <div class="card-name">${item.name}</div>
-                        <div class="card-description">${displayDesc} ${readMoreHtml}</div>
+                        <div class="card-description">${cleanDesc}</div>
                         <a href="${finalUrl}" 
                            target="${targetTabWindowId}" 
                            class="card-link" 
-                           onclick="executeSmartTabFocus(event, '${targetTabWindowId}', '${cleanFinalUrl}', '${cleanItemName}', '${cleanGroupName}')">
+                           onclick="event.stopPropagation(); executeSmartTabFocus(event, '${targetTabWindowId}', '${cleanFinalUrl}', '${cleanItemName}', '${cleanGroupName}')">
                             Open Link
                         </a>
                     `;
@@ -805,35 +854,6 @@
                 });
                 section.appendChild(grid);
                 container.appendChild(section);
-            });
-            setupImageLightbox();
-        }
-
-        window.openTextLightbox = function(title, content) {
-            const overlay = document.getElementById('lightbox-overlay');
-            const textTitle = document.getElementById('lightbox-text-title');
-            const textBody = document.getElementById('lightbox-text-body');
-            textTitle.innerHTML = title;
-            textBody.innerHTML = content;
-            overlay.style.display = 'flex';
-        };
-
-        window.openImageLightbox = function(title, src) {
-            const overlay = document.getElementById('lightbox-overlay');
-            const textTitle = document.getElementById('lightbox-text-title');
-            const textBody = document.getElementById('lightbox-text-body');
-            textTitle.innerHTML = title;
-            textBody.innerHTML = `<img src="${src}" style="max-width:100%; border-radius:8px; display:block; margin:0 auto;">`;
-            overlay.style.display = 'flex';
-        };
-
-        function setupImageLightbox() {
-            document.querySelectorAll('.container img').forEach(img => {
-                if (img.classList.contains('lightbox-target')) return;
-                img.classList.add('lightbox-target');
-                img.onclick = () => {
-                    openImageLightbox("Image View", img.src);
-                };
             });
         }
 
@@ -844,20 +864,17 @@
             loadCards();
             updateWeatherAndTime();
             
-            // SILENT AUTO-UPDATE - Refresh cards and weather every 5 minutes (300,000ms)
             setInterval(() => {
                 loadCards();
                 updateWeatherAndTime();
                 console.log("Background Data Update Completed.");
             }, 300000);
 
-            // Update time/clocks and recheck background hours mapping every minute (60,000ms)
             setInterval(() => {
                 updateWeatherAndTime();
                 applyTimeBasedTheme();
             }, 60000);
             
-            // Handle resize for dynamic layout adjustment
             window.addEventListener('resize', () => {
                 clearTimeout(window.resizeTimer);
                 window.resizeTimer = setTimeout(loadCards, 250);
