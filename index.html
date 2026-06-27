@@ -1,49 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- 
-    ========================================================================
-    PROJECT: Easy Links for Projects (Resource Directory)
-    VERSION: 1.1.9
-    AUTHOR: Kevin (Werewolf3788)
-    HOSTING: Optimized for GitHub Pages (werewolf3788.github.io/Quick-Links/)
-    DESCRIPTION: A responsive, mobile-first card layout that fetches data 
-    from a Google Sheets CSV and categorizes entries by group.
-    
-    NEW IN 1.1.9:
-    - Glossy Premium UI: Added glass-like inner shadows, subtle background gradients, 
-      and a diagonal light-sweep animation on hover for a high-end glossy finish.
-
-    NEW IN 1.1.8:
-    - Smart Tab Management: Assigns a unique window target to every link so
-      duplicate clicks focus the existing open tab rather than spawning new ones.
-    - Master Dev Protocol: Added KF Watermark overlay to the bottom-left.
-
-    NEW IN 1.1.7:
-    - Smart Group Stacking: Groups now calculate width based on card counts.
-    - Multi-Group Rows: Allows groups of 1, 2, 3, or 4 to sit side-by-side.
-    - Precision Sizing: Aligned to 327px card width (from user ruler data).
-    - Dynamic Wrapping: Groups wrap intelligently when row capacity is hit.
-    
-    NEW IN 1.1.6:
-    - Smart Flex Logic: Groups with <= 4 cards aggressively stack side-by-side.
-    - Full-Width Logic: Groups with 5+ cards automatically take a 100% row.
-    - Silent Auto-Update: JS now background-refreshes data every 5 minutes.
-    - Analytics: Measurement ID: G-Z9M5LXQ5XN (Stream: 13278632388).
-    - Weather: Effingham & Gainesville live (Temp, Real Feel, Humidity).
-    - Global Standards: Header 30px, Body 14px, Section 50px, Row 30px.
-    
-    TIMESTAMP: May 7, 2026 - 8:48 PM EDT (New York Time)
-    NO STRIPPING, NO COMPRESSING, DON'T CHANGE WHAT I DIDN'T SAY TO CHANGE.
-    ========================================================================
-    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Hard refresh safety: 300 seconds (5 minutes) -->
     <meta http-equiv="refresh" content="300">
     <title>Quick Links for Projects</title>
 
-    <!-- Global Site Tag (gtag.js) - Google Analytics (Kevin's Tracking for Projects) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z9M5LXQ5XN"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -53,7 +15,7 @@
         gtag('config', 'G-Z9M5LXQ5XN', {
             'page_type': 'quick_links_dashboard',
             'content_group': 'werewolf_personal_tracking',
-            'layout_version': '1.1.9',
+            'layout_version': '1.2.0',
             'stream_id': '13278632388'
         });
 
@@ -75,7 +37,7 @@
     <style>
         /* ========================================================================
         CSS STYLES - UNIVERSAL STANDARDS
-        ========================================================================
+        =======================================================================
         */
         :root {
             --primary-bg: #ffffff;
@@ -311,6 +273,7 @@
 
         /* GLOSSY BUTTONS */
         .card-link {
+            display: block;
             text-decoration: none;
             color: var(--current-accent);
             font-weight: bold;
@@ -324,6 +287,7 @@
             /* Subtle top-down gloss on button interior */
             background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%);
             margin-top: auto; /* Pushes button to bottom of standard height card */
+            cursor: pointer;
         }
 
         .card-link:hover {
@@ -439,27 +403,23 @@
 <body>
 
     <header>
-        <!-- Left Side: Effingham, IL Weather & Time (Central Time) -->
         <div class="weather-block left" id="weather-effingham">
             <div class="weather-city">Effingham, IL</div>
             <div class="weather-info">Loading...</div>
             <div class="weather-time">--:-- --</div>
         </div>
 
-        <!-- Center: Branding -->
         <div class="header-branding">
             <div class="logo">Quick Links for Projects</div>
             <div class="subtitle">Scott & Kevin Quick tabs</div>
         </div>
 
-        <!-- Right Side: Gainesville, FL Weather & Time (Eastern Time) -->
         <div class="weather-block right" id="weather-gainesville">
             <div class="weather-city">Gainesville, FL</div>
             <div class="weather-info">Loading...</div>
             <div class="weather-time">--:-- --</div>
         </div>
 
-        <!-- Mobile Sandwich icon (visible only on small screens) -->
         <div class="menu-toggle" onclick="toggleMenu()">
             <span></span><span></span><span></span>
         </div>
@@ -469,10 +429,9 @@
         <p>Fetching the latest links from Google Sheets...</p>
     </div>
 
-    <!-- Universal Lightbox Container -->
     <div id="lightbox-overlay" onclick="closeLightbox()">
         <div id="lightbox-content" onclick="event.stopPropagation()">
-            <span class="close-lightbox" onclick="closeLightbox()">&times;</span>
+            <span class="close-lightbox" onclick="closeLightbox()">×</span>
             <div id="lightbox-text-area">
                 <div id="lightbox-text-title"></div>
                 <div id="lightbox-text-body"></div>
@@ -480,7 +439,6 @@
         </div>
     </div>
 
-    <!-- KF Signature Watermark -->
     <div class="kf-signature">
         <span class="kf-k">K</span>
         <span class="kf-f">F</span>
@@ -492,8 +450,11 @@
         ========================================================================
         */
 
-        const VERSION = "1.1.9";
+        const VERSION = "1.2.0";
         
+        // Track references to open windows globally
+        const openTabsTracker = {};
+
         /**
          * Returns a timestamp for the cache buster to force fresh data fetch
          */
@@ -607,7 +568,26 @@
         }
 
         /**
-         * Grid Rendering with SMART FLEX LOGIC - Version 1.1.9
+         * Advanced Link Routing Logic
+         * Checks tracking object to see if tab window handles exist and are open. 
+         * If they are not open, it loads directly on the same page window.
+         */
+        window.handleSmartTabRouting = function(uniqueId, url, name, group) {
+            // Run global analytics function
+            trackLinkClick(name, group, url);
+
+            // Check if window object reference exists and is not closed
+            if (openTabsTracker[uniqueId] && !openTabsTracker[uniqueId].closed) {
+                openTabsTracker[uniqueId].location.href = url;
+                openTabsTracker[uniqueId].focus();
+            } else {
+                // If it isn't open anywhere else, load right here on the same tab
+                window.location.href = url;
+            }
+        };
+
+        /**
+         * Grid Rendering with SMART FLEX LOGIC - Version 1.2.0
          * Calculates flex-basis based on card counts to allow groups to sit side-by-side.
          */
         function renderCards(groups) {
@@ -626,9 +606,6 @@
                 const itemCount = groups[group].length;
                 
                 // CALCULATE DYNAMIC FLEX BASIS
-                // Logic: itemCount * SLOT_WIDTH gives the minimum space needed to fit all cards in one row within this group.
-                // This allows groups with 1, 2, or 3 cards to fill only their portion of the screen width.
-                // Example: Group A (1 card) + Group B (4 cards) = 5 slots. If screen has 7 slots, they stay side-by-side.
                 const dynamicBasis = itemCount * SLOT_WIDTH;
                 
                 section.className = `group-section`;
@@ -636,10 +613,8 @@
                 section.style.setProperty('--current-accent', colorPair[1]);
                 
                 // On large screens, set the flex-basis to allow stacking. 
-                // Capping at 100% and ensuring at least 350px.
                 if (window.innerWidth > 768) {
                     section.style.flexBasis = `${dynamicBasis}px`;
-                    // If it's a huge group (e.g. 10 cards), limit the growth so it doesn't push others too aggressively
                     if (itemCount >= 6) {
                         section.style.flexBasis = "100%";
                     }
@@ -666,16 +641,19 @@
                         readMoreHtml = `<span class="read-more-btn" onclick="openTextLightbox('${item.name.replace(/'/g, "\\'")}', \`${cleanDesc.replace(/`/g, "\\`")}\`)">Read more</span>`;
                     }
 
-                    // Generate a unique target name derived from the link's name to prevent duplicate tabs
-                    const uniqueTarget = `tab_${item.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                    // Generate a unique token key for tab comparison matching
+                    const uniqueTargetKey = `tab_${item.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+                    // Escape strings safely for inline JS parameters
+                    const escName = item.name.replace(/'/g, "\\'");
+                    const escGroup = group.replace(/'/g, "\\'");
+                    const escUrl = finalUrl.replace(/'/g, "\\'");
 
                     card.innerHTML = `
                         <div class="card-name">${item.name}</div>
                         <div class="card-description">${displayDesc} ${readMoreHtml}</div>
-                        <a href="${finalUrl}" 
-                           target="${uniqueTarget}" 
-                           class="card-link" 
-                           onclick="trackLinkClick('${item.name.replace(/'/g, "\\'")}', '${group.replace(/'/g, "\\'")}', '${finalUrl.replace(/'/g, "\\'")}')">
+                        <a class="card-link" 
+                           onclick="handleSmartTabRouting('${uniqueTargetKey}', '${escUrl}', '${escName}', '${escGroup}')">
                            Open Link
                         </a>
                     `;
@@ -730,7 +708,6 @@
             
             // Handle resize for dynamic layout adjustment
             window.addEventListener('resize', () => {
-                // Throttled reload to update dynamicBasis logic if screen changes drastically
                 clearTimeout(window.resizeTimer);
                 window.resizeTimer = setTimeout(loadCards, 250);
             });
