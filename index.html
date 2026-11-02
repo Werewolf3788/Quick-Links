@@ -549,17 +549,33 @@
                 if (!response.ok) throw new Error('Network response not ok');
                 const data = await response.text();
                 const rows = parseCSV(data);
-                rows.shift(); // Remove Headers
+                const headers = rows.shift() || []; // Remove Headers
+
+                // If the sheet has a date-style column (Date, Added, Updated, Modified, Timestamp),
+                // sort by it. Otherwise fall back to sheet row order (newest rows are at the bottom).
+                const dateCol = headers.findIndex((h, i) => i > 3 && /date|added|updated|modified|timestamp/i.test(h));
+
                 const groups = {};
-                rows.forEach(row => {
+                rows.forEach((row, rowIndex) => {
                     const name = (row[0] || "").trim();
                     if (!name) return;
                     const desc = (row[1] || "").trim();
                     const groupName = (row[2] || "").trim() || 'General';
                     const url = (row[3] || "").trim() || '#';
+
+                    let sortKey = rowIndex;
+                    if (dateCol !== -1) {
+                        const parsed = Date.parse((row[dateCol] || "").trim());
+                        if (!isNaN(parsed)) sortKey = parsed;
+                    }
+
                     if (!groups[groupName]) groups[groupName] = [];
-                    groups[groupName].push({ name, description: desc, group: groupName, url });
+                    groups[groupName].push({ name, description: desc, group: groupName, url, sortKey });
                 });
+
+                // Newest first inside each group
+                Object.values(groups).forEach(items => items.sort((a, b) => b.sortKey - a.sortKey));
+
                 renderCards(groups);
             } catch (error) { 
                 console.error("CSV load error:", error);
@@ -593,7 +609,8 @@
         function renderCards(groups) {
             const container = document.getElementById('content-area');
             container.innerHTML = '';
-            const sortedGroups = Object.keys(groups).sort();
+            // Groups containing the newest item come first (items are already newest-first)
+            const sortedGroups = Object.keys(groups).sort((a, b) => groups[b][0].sortKey - groups[a][0].sortKey);
             const MAX_DESC_LENGTH = 150;
             
             // Base slot width (card + gap)
