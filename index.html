@@ -648,6 +648,10 @@
                     
                     if (item.url.match(/^[0-9]+ .+, .+/)) {
                         finalUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.url)}`;
+                    } else if (!/^[a-z][a-z0-9+.\-]*:/i.test(finalUrl) && /^(www\.)?[\w\-]+(\.[\w\-]+)+([\/?#]|$)/i.test(finalUrl)) {
+                        // Sheet entry has no scheme (e.g. "werewolf3788.github.io/SMLC/tct.html").
+                        // Without this the browser treats it as a relative path on this page.
+                        finalUrl = `https://${finalUrl}`;
                     }
 
                     const cleanDesc = item.description.replace(/\n/g, "<br>");
