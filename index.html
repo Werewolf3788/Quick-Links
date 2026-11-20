@@ -260,6 +260,17 @@
             white-space: normal;
         }
 
+        /* LAST UPDATED / WHAT CHANGED (filled by the sheet's GitHub sync) */
+        .card-meta { position: relative; z-index: 2; font-size: 0.8rem; color: #666; margin: -4px 0 8px; }
+        .card-meta b { color: var(--current-accent); }
+        .card-changed { position: relative; z-index: 2; font-size: 0.85rem; color: #333; background: rgba(0,0,0,0.04);
+                        border-left: 3px solid var(--current-accent); padding: 6px 8px; border-radius: 4px; margin-bottom: 12px; }
+        .new-badge { display: inline-block; background: #d93025; color: #fff; font-size: 0.65rem; font-weight: bold;
+                     letter-spacing: 1px; padding: 2px 7px; border-radius: 999px; vertical-align: middle; margin-left: 6px; }
+        .card-gh { position: relative; z-index: 2; display: block; text-align: center; font-size: 0.8rem; margin-top: 8px;
+                   color: #555; text-decoration: underline; cursor: pointer; }
+        .recent-section .group-title::after { content: " (last 7 days)"; font-size: 0.9rem; font-weight: normal; color: #666; }
+
         /* READ MORE LINK */
         .read-more-btn {
             display: inline-block;
@@ -554,6 +565,8 @@
                 // If the sheet has a date-style column (Date, Added, Updated, Modified, Timestamp),
                 // sort by it. Otherwise fall back to sheet row order (newest rows are at the bottom).
                 const dateCol = headers.findIndex((h, i) => i > 3 && /date|added|updated|modified|timestamp/i.test(h));
+                const ghCol = headers.findIndex(h => /^\s*github\s*$/i.test(h));
+                const changedCol = headers.findIndex(h => /what changed/i.test(h));
 
                 const groups = {};
                 rows.forEach((row, rowIndex) => {
@@ -563,14 +576,18 @@
                     const groupName = (row[2] || "").trim() || 'General';
                     const url = (row[3] || "").trim() || '#';
 
+                    // Rows without a date sort after dated ones, in sheet order
                     let sortKey = rowIndex;
+                    let updated = null;
                     if (dateCol !== -1) {
-                        const parsed = Date.parse((row[dateCol] || "").trim());
-                        if (!isNaN(parsed)) sortKey = parsed;
+                        updated = parseSheetDate(row[dateCol]);
+                        if (updated) sortKey = updated.getTime();
                     }
+                    const github = ghCol !== -1 ? (row[ghCol] || "").trim() : "";
+                    const changed = changedCol !== -1 ? (row[changedCol] || "").trim() : "";
 
                     if (!groups[groupName]) groups[groupName] = [];
-                    groups[groupName].push({ name, description: desc, group: groupName, url, sortKey });
+                    groups[groupName].push({ name, description: desc, group: groupName, url, sortKey, updated, github, changed });
                 });
 
                 // Newest first inside each group
@@ -581,6 +598,29 @@
                 console.error("CSV load error:", error);
                 document.getElementById('content-area').innerHTML = `<p>Error loading spreadsheet links. Retrying in 5 mins...</p>`; 
             }
+        }
+
+        // "2026-11-20 14:15" (the sheet's format) -> Date in local time. Works on iPhone Safari too,
+        // which can't read that format with Date.parse.
+        function parseSheetDate(v) {
+            v = String(v || '').trim();
+            const m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+            if (m) return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+            const t = Date.parse(v);
+            return isNaN(t) ? null : new Date(t);
+        }
+
+        function timeAgo(d) {
+            const s = (Date.now() - d.getTime()) / 1000;
+            if (s < 60) return 'just now';
+            if (s < 3600) return Math.floor(s / 60) + ' min ago';
+            if (s < 86400) return Math.floor(s / 3600) + ' hr ago';
+            if (s < 86400 * 30) return Math.floor(s / 86400) + (s < 86400 * 2 ? ' day ago' : ' days ago');
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function escHtml(t) {
+            return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
         }
 
         /**
@@ -611,6 +651,18 @@
             container.innerHTML = '';
             // Groups containing the newest item come first (items are already newest-first)
             const sortedGroups = Object.keys(groups).sort((a, b) => groups[b][0].sortKey - groups[a][0].sortKey);
+
+            // "Recently Updated" goes first: anything changed in the last 7 days, newest first
+            const WEEK = 7 * 86400000;
+            const recent = [].concat(...Object.values(groups))
+                .filter(it => it.updated && Date.now() - it.updated.getTime() < WEEK)
+                .sort((a, b) => b.updated - a.updated)
+                .slice(0, 8);
+            const RECENT = '🆕 Recently Updated';
+            if (recent.length) {
+                groups = Object.assign({ [RECENT]: recent }, groups);
+                sortedGroups.unshift(RECENT);
+            }
             const MAX_DESC_LENGTH = 150;
             
             // Base slot width (card + gap)
@@ -625,7 +677,7 @@
                 // CALCULATE DYNAMIC FLEX BASIS
                 const dynamicBasis = itemCount * SLOT_WIDTH;
                 
-                section.className = `group-section`;
+                section.className = group === RECENT ? 'group-section recent-section' : 'group-section';
                 section.style.backgroundColor = colorPair[0];
                 section.style.setProperty('--current-accent', colorPair[1]);
                 
@@ -670,13 +722,25 @@
                     const escGroup = group.replace(/'/g, "\\'");
                     const escUrl = finalUrl.replace(/'/g, "\\'");
 
+                    const isNew = item.updated && Date.now() - item.updated.getTime() < 86400000;
+                    const metaHtml = item.updated
+                        ? `<div class="card-meta">Updated <b>${timeAgo(item.updated)}</b> · ${item.updated.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}${group === RECENT ? ' · ' + escHtml(item.group) : ''}</div>`
+                        : '';
+                    const changedHtml = item.changed ? `<div class="card-changed">${escHtml(item.changed)}</div>` : '';
+                    const ghHtml = /^https:\/\/github\.com\//.test(item.github)
+                        ? `<a class="card-gh" href="${escHtml(item.github)}" target="_blank" rel="noopener" onclick="trackLinkClick('${escName} (GitHub)', '${escGroup}', '${escHtml(item.github)}')">View on GitHub</a>`
+                        : '';
+
                     card.innerHTML = `
-                        <div class="card-name">${item.name}</div>
+                        <div class="card-name">${item.name}${isNew ? '<span class="new-badge">NEW</span>' : ''}</div>
+                        ${metaHtml}
                         <div class="card-description">${displayDesc} ${readMoreHtml}</div>
+                        ${changedHtml}
                         <a class="card-link" 
                            onclick="handleSmartTabRouting('${uniqueTargetKey}', '${escUrl}', '${escName}', '${escGroup}')">
                            Open Link
                         </a>
+                        ${ghHtml}
                     `;
                     grid.appendChild(card);
                 });
